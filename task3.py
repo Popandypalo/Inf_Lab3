@@ -14,22 +14,35 @@ class StudentListProcessor:
     def __init__(self, group_number):
         self.group_number = group_number
         self.student_pattern = re.compile(
-            r'([А-ЯЁ][а-яё]+(?:-[А-ЯЁ][а-яё]+)?)\s([А-ЯЁ])\.\s?([А-ЯЁ])\.\s+(\S+)',
+            rf'([А-ЯЁ][а-яё]+(?:-[А-ЯЁ][а-яё]+)?)\s([А-ЯЁ])\.\s?\2\.\s+({self.group_number})',
             re.UNICODE
         )
 
-    def process_list(self, text):
-        all_students = []
-        excluded_students = set()
-        for match in self.student_pattern.finditer(text):
-            full_entry = match.group()
-            surname, initial1, initial2, group = match.groups()
-            all_students.append(full_entry)
-            if group == self.group_number and initial1 == initial2:
-                excluded_students.add(full_entry)
-        remaining_students = [student for student in all_students if student not in excluded_students]
-        return remaining_students
+    def set_group_number(self, group_number):
+        while True:
+            try:
+                # Проверяем, что номер группы соответствует формату
+                if not isinstance(group_number, str):
+                    raise ValueError("Номер группы должен быть строкой.")
+                if not re.match(r'^P\d{4}$', group_number):
+                    raise ValueError("Номер группы должен быть в формате 'P0000'")
+                self.group_number = group_number
+                self.student_pattern = re.compile(
+                    rf'([А-ЯЁ][а-яё]+(?:-[А-ЯЁ][а-яё]+)?)\s([А-ЯЁ])\.\s?\2\.\s+({self.group_number})',
+                    re.UNICODE
+                )
+                break
+            except ValueError as e:
+                print(e)
+                group_number = input("Введите номер группы заново: ")
 
+    def process_list(self, text):
+        excluded_students = set(match.group() for match in self.student_pattern.finditer(text))
+        students = text.split(" ")
+        student_entries = [" ".join(students[i:i+3]) for i in range(0, len(students), 3)]
+        remaining_students = [entry for entry in student_entries if entry not in excluded_students]
+        return remaining_students
+    
 if __name__ == "__main__":
     processor = StudentListProcessor("P0000")
 
@@ -95,8 +108,10 @@ if __name__ == "__main__":
             print(f"{bcolors.FAIL}Результаты не совпадают.{bcolors.ENDC}")
         print("-" * 50)
 
-    user_text = input("Введите список студентов в одну строку:\n")
-    result = processor.process_list(user_text)
+    user_group_text = input("Введите группу студентов: ")
+    processor.set_group_number(user_group_text)
+    user_test_text = input("Введите список студентов в одну строку:\n")
+    result = processor.process_list(user_test_text)
     if result:
         print(f"{bcolors.OKGREEN}Оставшиеся студенты:{bcolors.ENDC}")
         print('\n'.join(result))

@@ -12,7 +12,7 @@ class bcolors:
 
 class SurnameExtractor:
     def __init__(self):
-        self.pattern = re.compile(r'([А-ЯЁ][а-яё]+(?:-[А-ЯЁ][а-яё]+)*)\s[А-ЯЁ]\.\s?[А-ЯЁ]\.', re.UNICODE)
+        self.pattern = re.compile(r'\b([А-ЯЁ][а-яё]+(?:-[А-ЯЁ][а-яё]+){0,1})\s(?:[А-ЯЁ]\.\s?){1,2}\b', re.UNICODE)
 
     def extract_surnames(self, text):
         surnames = self.pattern.findall(text)
